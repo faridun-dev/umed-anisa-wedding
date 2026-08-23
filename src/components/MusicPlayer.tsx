@@ -73,6 +73,7 @@ export function MusicPlayer() {
   const { lang } = useLanguage();
   const reducedMotion = useReducedMotionSafe();
   const mountRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const playerRef = useRef<YouTubePlayerInstance | null>(null);
   // The player autoplays muted immediately (browser-compliant); this tracks
   // whether the user has since made it audible — that, not YT's internal
@@ -88,8 +89,11 @@ export function MusicPlayer() {
 
       playerRef.current = new window.YT.Player(mountRef.current, {
         videoId: VIDEO_ID,
-        width: "2",
-        height: "2",
+        // A degenerate 1-2px size breaks the embedded player's internal
+        // init (onReady never fires) — keep a normal size and let the
+        // sr-only wrapper below hide it visually instead.
+        width: "200",
+        height: "113",
         playerVars: {
           autoplay: 1,
           mute: 1,
@@ -141,28 +145,33 @@ export function MusicPlayer() {
         <div ref={mountRef} />
       </div>
 
-      <motion.button
-        type="button"
-        onClick={toggle}
-        disabled={!ready}
-        aria-pressed={isAudible}
-        aria-label={label}
-        title={label}
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: ready ? 1 : 0 }}
         transition={{ duration: 0.6 }}
-        className="fixed bottom-4 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 bg-paper/80 shadow-[0_4px_16px_-8px_rgba(36,30,25,0.25)] backdrop-blur-sm transition-colors disabled:pointer-events-none sm:bottom-6 sm:right-6"
+        className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6"
       >
-        <motion.span
-          className={isAudible ? "text-wine" : "text-espresso/50"}
-          animate={
-            !reducedMotion && isAudible ? { rotate: 360 } : { rotate: 0 }
-          }
-          transition={{ duration: 6, repeat: isAudible ? Infinity : 0, ease: "linear" }}
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={toggle}
+          disabled={!ready}
+          aria-pressed={isAudible}
+          aria-label={label}
+          title={label}
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 bg-paper/80 shadow-[0_4px_16px_-8px_rgba(36,30,25,0.25)] backdrop-blur-sm transition-colors disabled:pointer-events-none"
         >
-          <NoteIcon />
-        </motion.span>
-      </motion.button>
+          <motion.span
+            className={isAudible ? "text-wine" : "text-espresso/50"}
+            animate={
+              !reducedMotion && isAudible ? { rotate: 360 } : { rotate: 0 }
+            }
+            transition={{ duration: 6, repeat: isAudible ? Infinity : 0, ease: "linear" }}
+          >
+            <NoteIcon />
+          </motion.span>
+        </button>
+      </motion.div>
     </>
   );
 }
